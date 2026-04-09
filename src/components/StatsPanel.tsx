@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import type { DailyStats } from '../lib/types'
 
 interface StatsPanelProps {
@@ -18,7 +19,40 @@ function diffLabel(diff: number): string {
   return DIFF_LABELS[diff] ?? `OFF ${diff}`
 }
 
+function getNextResetTime(): Date {
+  const now = new Date()
+  const next = new Date(now)
+  next.setUTCDate(next.getUTCDate() + (now.getUTCHours() >= 5 ? 1 : 0))
+  next.setUTCHours(5, 0, 0, 0)
+  if (next <= now) {
+    next.setUTCDate(next.getUTCDate() + 1)
+  }
+  return next
+}
+
+function formatCountdown(ms: number): string {
+  if (ms <= 0) return '00:00:00'
+  const totalSeconds = Math.floor(ms / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+}
+
 export function StatsPanel({ stats, todayDiff }: StatsPanelProps) {
+  const [countdown, setCountdown] = useState(() => {
+    const ms = getNextResetTime().getTime() - Date.now()
+    return formatCountdown(ms)
+  })
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const ms = getNextResetTime().getTime() - Date.now()
+      setCountdown(formatCountdown(ms))
+    }, 1000)
+    return () => clearInterval(interval)
+  }, [])
+
   const played = stats.history.length
   const exactCount = stats.distribution[0] ?? 0
   const exactPct = played > 0 ? Math.round((exactCount / played) * 100) : 0
@@ -27,7 +61,6 @@ export function StatsPanel({ stats, todayDiff }: StatsPanelProps) {
   const buckets = [0, 1, 2, 3, 4]
   const bucketCounts = buckets.map(b => {
     if (b < 4) return stats.distribution[b] ?? 0
-    // 4+ bucket: sum all diffs >= 4
     return Object.entries(stats.distribution)
       .filter(([k]) => Number(k) >= 4)
       .reduce((sum, [, v]) => sum + v, 0)
@@ -35,42 +68,42 @@ export function StatsPanel({ stats, todayDiff }: StatsPanelProps) {
   const maxCount = Math.max(...bucketCounts, 1)
 
   return (
-    <div className="w-full py-2">
-      {/* Summary row - Wordle 4-column stats */}
+    <div className="w-full">
+      {/* 4-stat summary row */}
       <div className="mb-4 grid grid-cols-4 gap-2 text-center">
         <div>
-          <div className="text-[28px] font-light text-[var(--color-text)]">
+          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
             {played}
           </div>
-          <div className="text-[11px] text-[var(--color-text-secondary)]">Played</div>
+          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Played</div>
         </div>
         <div>
-          <div className="text-[28px] font-light text-[var(--color-text)]">
+          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
             {exactPct}
           </div>
-          <div className="text-[11px] text-[var(--color-text-secondary)]">Exact %</div>
+          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Exact %</div>
         </div>
         <div>
-          <div className="text-[28px] font-light text-[var(--color-text)]">
+          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
             {stats.streak}
           </div>
-          <div className="text-[11px] text-[var(--color-text-secondary)]">Current<br />Streak</div>
+          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Current Streak</div>
         </div>
         <div>
-          <div className="text-[28px] font-light text-[var(--color-text)]">
+          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
             {stats.maxStreak}
           </div>
-          <div className="text-[11px] text-[var(--color-text-secondary)]">Max<br />Streak</div>
+          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Max Streak</div>
         </div>
       </div>
 
       {/* Distribution heading */}
-      <div className="mb-2 text-center text-[12px] font-bold uppercase tracking-wider text-[var(--color-text)]">
+      <div className="mb-2 text-[12px] font-bold uppercase tracking-[0.15em] text-[var(--color-text)]">
         Guess Distribution
       </div>
 
-      {/* Distribution histogram - Wordle style horizontal bars */}
-      <div className="space-y-[3px]">
+      {/* Horizontal bar chart */}
+      <div className="space-y-[4px]">
         {buckets.map((b, i) => {
           const count = bucketCounts[i]
           const widthPct = maxCount > 0 ? Math.max((count / maxCount) * 100, count > 0 ? 8 : 4) : 4
@@ -83,11 +116,11 @@ export function StatsPanel({ stats, todayDiff }: StatsPanelProps) {
               </span>
               <div className="relative flex-1">
                 <div
-                  className="flex h-5 items-center justify-end px-1 text-[11px] font-bold text-white"
+                  className="flex h-5 items-center justify-end px-2 text-[11px] font-bold text-white"
                   style={{
                     width: `${widthPct}%`,
                     minWidth: '20px',
-                    backgroundColor: isToday ? 'var(--color-green)' : 'var(--color-border)',
+                    backgroundColor: isToday ? 'var(--color-green)' : '#3a3a3c',
                   }}
                 >
                   {count}
@@ -96,6 +129,16 @@ export function StatsPanel({ stats, todayDiff }: StatsPanelProps) {
             </div>
           )
         })}
+      </div>
+
+      {/* Countdown */}
+      <div className="mt-6 border-t border-[var(--color-border)] pt-4 text-center">
+        <div className="text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--color-text-secondary)]">
+          Next GradeGuess
+        </div>
+        <div className="mt-1 text-[28px] font-light tabular-nums text-[var(--color-text)]">
+          {countdown}
+        </div>
       </div>
     </div>
   )

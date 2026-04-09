@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { fetchDaily, submitGuess } from '../lib/api'
-import { loadGuess, saveGuess, loadStats, saveStats, updateStats } from '../lib/storage'
+import { loadGuess, saveGuess, loadStats, saveStats, updateStats, isOnboarded, setOnboarded } from '../lib/storage'
 import { getGameInfo, type GameSlug, type DailyCard, type DailyReveal } from '../lib/types'
 import { StatsPanel } from './StatsPanel'
+import { Onboarding } from './Onboarding'
 
 type PageState = 'loading' | 'guessing' | 'revealed' | 'error' | 'not-found'
 
 function feedbackColor(diff: number): string {
   if (diff === 0) return 'var(--color-green)'
   if (diff === 1) return 'var(--color-yellow)'
-  return 'var(--color-red)'
+  return '#3a3a3c'
 }
 
 function feedbackText(diff: number): string {
@@ -30,9 +31,12 @@ export function GamePage() {
   const [reveal, setReveal] = useState<DailyReveal | null>(null)
   const [guess, setGuess] = useState<number | null>(null)
   const [stats, setStats] = useState(gameSlug ? loadStats(gameSlug) : null)
-  const [zoomed, setZoomed] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [showOnboarding, setShowOnboarding] = useState(() => !isOnboarded())
+  const [showHelp, setShowHelp] = useState(false)
+  const [shareText, setShareText] = useState('SHARE')
+  const [animateReveal, setAnimateReveal] = useState(false)
 
   useEffect(() => {
     if (!gameInfo || !gameSlug) {
@@ -47,7 +51,6 @@ export function GamePage() {
         if (cancelled) return
         setCard(data)
 
-        // Check if already guessed
         const stored = loadGuess(gameSlug, data.puzzleNumber)
         if (stored) {
           setGuess(stored.guess)
@@ -82,6 +85,7 @@ export function GamePage() {
       setGuess(selectedGrade)
       setReveal(result)
       setStats(updated)
+      setAnimateReveal(true)
       setState('revealed')
     } catch {
       setErrorMsg('Failed to submit guess. Try again.')
@@ -94,118 +98,117 @@ export function GamePage() {
   const handleShare = useCallback(() => {
     if (!gameInfo || !card || guess == null || !reveal) return
     const diff = Math.abs(guess - reveal.actualGrade)
-    const emoji = diff === 0 ? '\u{1F7E9}' : diff === 1 ? '\u{1F7E8}' : '\u{1F7E5}'
-    const text = `GradeGuess ${gameInfo.name} #${card.puzzleNumber} ${emoji} ${guess}`
-    navigator.clipboard.writeText(text).catch(() => {
-      // Fallback: ignore clipboard errors
-    })
+    const emoji = diff === 0 ? '\u{1F7E9}' : diff === 1 ? '\u{1F7E8}' : '\u{2B1B}'
+    const text = `GradeGuess #${card.puzzleNumber} ${emoji} ${guess}`
+    navigator.clipboard.writeText(text).catch(() => {})
+    setShareText('COPIED!')
+    setTimeout(() => setShareText('SHARE'), 2000)
   }, [gameInfo, card, guess, reveal])
 
-  // Header component shared across states
-  const headerBar = (
+  function handleDismissOnboarding() {
+    setOnboarded()
+    setShowOnboarding(false)
+  }
+
+  const diff = guess != null && reveal ? Math.abs(guess - reveal.actualGrade) : null
+
+  // Header
+  const header = (
     <header className="flex h-[50px] items-center justify-between border-b border-[var(--color-border)] px-4">
-      <Link
-        to="/"
-        className="text-[var(--color-text)] hover:text-[var(--color-text-secondary)]"
-        aria-label="Back"
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-      </Link>
-      <h1 className="text-[16px] font-bold uppercase tracking-[0.15em] text-[var(--color-text)]">
-        {gameInfo?.name ?? 'Game'}
+      <div className="w-[44px]" />
+      <h1 className="text-[16px] font-bold uppercase tracking-[0.2em] text-[var(--color-text)]">
+        GradeGuess
       </h1>
-      <button type="button" className="text-[var(--color-text)]" aria-label="Stats">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <rect x="4" y="12" width="4" height="8" />
-          <rect x="10" y="8" width="4" height="12" />
-          <rect x="16" y="4" width="4" height="16" />
-        </svg>
-      </button>
+      <div className="flex w-[44px] items-center justify-end gap-3">
+        <button
+          type="button"
+          className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+          aria-label="Help"
+          onClick={() => setShowHelp(true)}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+            <line x1="12" y1="17" x2="12.01" y2="17" />
+          </svg>
+        </button>
+      </div>
     </header>
   )
 
-  // Not found state
+  // Not found
   if (state === 'not-found') {
     return (
       <div className="mx-auto min-h-screen max-w-[500px]">
-        {headerBar}
-        <div className="px-4 py-16 text-center text-[var(--color-text-muted)]">
+        {header}
+        <div className="px-4 py-16 text-center text-[14px] text-[var(--color-text-muted)]">
           Game not found
         </div>
       </div>
     )
   }
 
-  // Error state
+  // Error
   if (state === 'error') {
     return (
       <div className="mx-auto min-h-screen max-w-[500px]">
-        {headerBar}
-        <div className="px-4 py-16 text-center text-[var(--color-text-muted)]">
+        {header}
+        <div className="px-4 py-16 text-center text-[14px] text-[var(--color-text-muted)]">
           {errorMsg || 'Something went wrong'}
         </div>
       </div>
     )
   }
 
-  // Loading state
+  // Loading
   if (state === 'loading' || !card) {
     return (
       <div className="mx-auto min-h-screen max-w-[500px]">
-        {headerBar}
-        <div className="px-4 py-6">
-          <div className="mx-auto aspect-[63/88] w-full max-w-[300px] animate-pulse bg-[var(--color-border)]" />
+        {header}
+        <div className="flex justify-center px-4 pt-6">
+          <div className="aspect-[63/88] w-[80%] max-w-[300px] animate-pulse bg-[#1a1a1b]" />
         </div>
       </div>
     )
   }
 
-  const diff = guess != null && reveal ? Math.abs(guess - reveal.actualGrade) : null
-
   return (
-    <div className="mx-auto min-h-screen max-w-[500px]">
-      {headerBar}
+    <div className="mx-auto flex min-h-screen max-w-[500px] flex-col">
+      {showOnboarding && <Onboarding onDismiss={handleDismissOnboarding} />}
+      {showHelp && <Onboarding onDismiss={() => setShowHelp(false)} />}
 
-      <div className="px-4 py-4">
-        {/* Card image */}
-        <div className="mb-4 flex justify-center">
-          <button
-            type="button"
-            onClick={() => setZoomed(prev => !prev)}
-            className={`overflow-hidden border border-[var(--color-border)] transition-all ${
-              zoomed ? 'max-w-full' : 'max-w-[280px]'
-            }`}
-          >
-            <img
-              src={card.imageUrl}
-              alt="Card scan"
-              className="w-full"
-              style={{ maxHeight: '400px', objectFit: 'contain' }}
-              draggable={false}
-            />
-          </button>
+      {header}
+
+      <div className="flex flex-1 flex-col px-4">
+        {/* Card image - hero */}
+        <div className="flex flex-1 items-center justify-center py-4">
+          <img
+            src={card.imageUrl}
+            alt="Card scan"
+            className="w-[80%] max-w-[300px]"
+            style={{ objectFit: 'contain' }}
+            draggable={false}
+          />
         </div>
 
         {/* Guessing state */}
         {state === 'guessing' && (
-          <>
-            {/* Subtitle */}
+          <div className="pb-6">
+            {/* Prompt */}
             <div className="mb-4 text-center text-[13px] uppercase tracking-wide text-[var(--color-text-secondary)]">
-              Guess the grade
+              What grade did this card receive?
             </div>
 
-            {/* Grade buttons - Wordle keyboard tile style */}
-            <div className="mb-4 flex justify-center gap-[6px]">
+            {/* Grade tiles - horizontal strip */}
+            <div className="mb-4 flex justify-center gap-[5px]">
               {Array.from({ length: 10 }, (_, i) => i + 1).map(grade => (
                 <button
                   key={grade}
                   onClick={() => setSelectedGrade(grade)}
-                  className={`flex h-[45px] w-[45px] items-center justify-center text-[15px] font-bold transition-colors ${
+                  className={`flex h-[44px] w-[44px] items-center justify-center text-[15px] font-bold transition-colors ${
                     selectedGrade === grade
-                      ? 'bg-[var(--color-green)] text-white'
-                      : 'bg-[var(--color-key-bg)] text-white hover:opacity-80'
+                      ? 'border-2 border-white bg-[var(--color-text-secondary)] text-white'
+                      : 'bg-[#3a3a3c] text-white hover:bg-[#4a4a4c]'
                   }`}
                 >
                   {grade}
@@ -217,42 +220,72 @@ export function GamePage() {
             <button
               onClick={handleSubmit}
               disabled={selectedGrade == null || submitting}
-              className={`mx-auto block px-12 py-3 text-[13px] font-bold uppercase tracking-[0.15em] text-white transition-opacity ${
+              className={`mx-auto block w-full max-w-[300px] py-3 text-[13px] font-bold uppercase tracking-[0.15em] text-white transition-colors ${
                 selectedGrade != null
                   ? 'bg-[var(--color-green)]'
-                  : 'bg-[var(--color-key-bg)]'
+                  : 'bg-[#3a3a3c]'
               } disabled:opacity-40`}
             >
               {submitting ? 'SUBMITTING...' : 'ENTER'}
             </button>
-          </>
+          </div>
         )}
 
         {/* Revealed state */}
         {state === 'revealed' && reveal && guess != null && diff != null && (
-          <div className="space-y-4">
-            {/* Result feedback */}
-            <div className="py-3 text-center">
+          <div className="pb-6">
+            {/* Result tile + text */}
+            <div className="mb-4 flex flex-col items-center">
+              {/* Flipping grade tile */}
               <div
-                className="text-[28px] font-bold uppercase tracking-wide"
-                style={{ color: feedbackColor(diff) }}
+                className={animateReveal ? 'animate-flip' : ''}
+                style={{ perspective: '600px' }}
+              >
+                <div
+                  className="flex h-[56px] w-[56px] items-center justify-center text-[24px] font-bold text-white"
+                  style={{ backgroundColor: feedbackColor(diff) }}
+                >
+                  {reveal.actualGrade}
+                </div>
+              </div>
+
+              {/* Feedback text */}
+              <div
+                className={`mt-3 text-[22px] font-bold uppercase tracking-wide ${animateReveal ? 'animate-fade' : ''}`}
+                style={{
+                  color: feedbackColor(diff),
+                  animationDelay: animateReveal ? '0.3s' : undefined,
+                  opacity: animateReveal ? 0 : 1,
+                  animationFillMode: 'forwards',
+                }}
               >
                 {feedbackText(diff)}
               </div>
-              <div className="mt-1 text-[14px] text-[var(--color-text-secondary)]">
+
+              <div
+                className={`mt-1 text-[13px] text-[var(--color-text-secondary)] ${animateReveal ? 'animate-fade' : ''}`}
+                style={{
+                  animationDelay: animateReveal ? '0.4s' : undefined,
+                  opacity: animateReveal ? 0 : 1,
+                  animationFillMode: 'forwards',
+                }}
+              >
                 You guessed{' '}
-                <span className="font-bold text-[var(--color-text)]">
-                  {guess}
-                </span>
+                <span className="font-bold text-[var(--color-text)]">{guess}</span>
                 {' '}&mdash; actual grade{' '}
-                <span className="font-bold text-[var(--color-text)]">
-                  {reveal.actualGrade}
-                </span>
+                <span className="font-bold text-[var(--color-text)]">{reveal.actualGrade}</span>
               </div>
             </div>
 
-            {/* Card details */}
-            <div className="border-t border-b border-[var(--color-border)] py-3">
+            {/* Card details - fade in after reveal */}
+            <div
+              className={`mb-4 border-t border-b border-[var(--color-border)] py-3 ${animateReveal ? 'animate-fade' : ''}`}
+              style={{
+                animationDelay: animateReveal ? '0.6s' : undefined,
+                opacity: animateReveal ? 0 : 1,
+                animationFillMode: 'forwards',
+              }}
+            >
               <div className="text-[14px] font-semibold text-[var(--color-text)]">
                 {reveal.cardName}
               </div>
@@ -276,20 +309,32 @@ export function GamePage() {
               </div>
             </div>
 
-            {/* Stats */}
-            {stats && <StatsPanel stats={stats} todayDiff={diff} />}
+            {/* Stats panel - slides up */}
+            <div
+              className={animateReveal ? 'animate-slide-up' : ''}
+              style={{
+                animationDelay: animateReveal ? '0.8s' : undefined,
+                opacity: animateReveal ? 0 : 1,
+                animationFillMode: 'forwards',
+              }}
+            >
+              {stats && <StatsPanel stats={stats} todayDiff={diff} />}
+            </div>
 
             {/* Share button */}
-            <div className="flex justify-center pb-4">
+            <div
+              className={`mt-4 flex justify-center ${animateReveal ? 'animate-fade' : ''}`}
+              style={{
+                animationDelay: animateReveal ? '1.0s' : undefined,
+                opacity: animateReveal ? 0 : 1,
+                animationFillMode: 'forwards',
+              }}
+            >
               <button
                 onClick={handleShare}
-                className="flex items-center gap-2 border border-[var(--color-border)] bg-transparent px-6 py-2 text-[13px] font-bold uppercase tracking-wider text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+                className="w-full max-w-[300px] border border-[var(--color-border)] bg-transparent py-3 text-[13px] font-bold uppercase tracking-[0.15em] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
               >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="9" y="9" width="13" height="13" rx="0" />
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                </svg>
-                Share
+                {shareText}
               </button>
             </div>
           </div>

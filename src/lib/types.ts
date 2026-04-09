@@ -24,7 +24,7 @@ export interface DailyStats {
   history: Array<{ puzzleNumber: number; guess: number; actual: number }>
 }
 
-export type GameSlug = 'pokemon' | 'onepiece' | 'baseball' | 'basketball' | 'football'
+export type GameSlug = 'pokemon'
 
 export interface GameInfo {
   slug: GameSlug
@@ -35,10 +35,6 @@ export interface GameInfo {
 
 export const GAMES: GameInfo[] = [
   { slug: 'pokemon', name: 'Pokemon', emoji: '🃏', color: '#ef4444' },
-  { slug: 'onepiece', name: 'One Piece', emoji: '🏴‍☠️', color: '#f59e0b' },
-  { slug: 'baseball', name: 'Baseball', emoji: '⚾', color: '#22c55e' },
-  { slug: 'basketball', name: 'Basketball', emoji: '🏀', color: '#f97316' },
-  { slug: 'football', name: 'Football', emoji: '🏈', color: '#8b5cf6' },
 ]
 
 export function getGameInfo(slug: string): GameInfo | undefined {
