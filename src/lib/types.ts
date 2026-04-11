@@ -1,6 +1,8 @@
 export interface DailyCard {
   puzzleNumber: number
   imageUrl: string
+  frontImageUrl?: string
+  backImageUrl: string | null
 }
 
 export interface DailyReveal {
@@ -20,6 +22,8 @@ export interface GameStatus {
 export interface DailyStats {
   streak: number
   maxStreak: number
+  playStreak: number
+  maxPlayStreak: number
   distribution: Record<number, number>
   history: Array<{ puzzleNumber: number; guess: number; actual: number }>
 }

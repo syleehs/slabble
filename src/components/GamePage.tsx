@@ -5,6 +5,7 @@ import { loadGuess, saveGuess, loadStats, saveStats, updateStats, isOnboarded, s
 import { getGameInfo, type GameSlug, type DailyCard, type DailyReveal } from '../lib/types'
 import { StatsPanel } from './StatsPanel'
 import { Onboarding } from './Onboarding'
+import { CardViewer } from './CardViewer'
 
 type PageState = 'loading' | 'guessing' | 'revealed' | 'error' | 'not-found'
 
@@ -153,8 +154,36 @@ export function GamePage() {
     return (
       <div className="mx-auto min-h-screen max-w-[500px]">
         {header}
-        <div className="px-4 py-16 text-center text-[14px] text-[var(--color-text-muted)]">
-          {errorMsg || 'Something went wrong'}
+        <div className="px-4 py-16 text-center">
+          <div className="text-[14px] text-[var(--color-text-muted)]">
+            {errorMsg || 'Something went wrong'}
+          </div>
+          <button
+            onClick={() => {
+              setErrorMsg('')
+              setState('loading')
+              fetchDaily(gameSlug!)
+                .then(data => {
+                  setCard(data)
+                  const stored = loadGuess(gameSlug!, data.puzzleNumber)
+                  if (stored) {
+                    setGuess(stored.guess)
+                    setReveal(stored.reveal)
+                    setStats(loadStats(gameSlug!))
+                    setState('revealed')
+                  } else {
+                    setState('guessing')
+                  }
+                })
+                .catch(() => {
+                  setErrorMsg('No card available today')
+                  setState('error')
+                })
+            }}
+            className="mt-4 border border-[var(--color-border)] bg-transparent px-6 py-2 text-[13px] font-bold uppercase tracking-[0.15em] text-[var(--color-text)] transition-colors hover:bg-[var(--color-surface-hover)]"
+          >
+            Try again
+          </button>
         </div>
       </div>
     )
@@ -181,15 +210,11 @@ export function GamePage() {
 
       <div className="flex flex-1 flex-col px-4">
         {/* Card image - hero */}
-        <div className="flex flex-1 items-center justify-center py-4">
-          <img
-            src={card.imageUrl}
-            alt="Card scan"
-            className="w-[80%] max-w-[300px]"
-            style={{ objectFit: 'contain' }}
-            draggable={false}
-          />
-        </div>
+        <CardViewer
+          frontImageUrl={card.frontImageUrl ?? card.imageUrl}
+          backImageUrl={card.backImageUrl ?? null}
+          mode={state === 'revealed' ? 'revealed' : 'guessing'}
+        />
 
         {/* Guessing state */}
         {state === 'guessing' && (

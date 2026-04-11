@@ -16,9 +16,10 @@ export function saveGuess(game: GameSlug, puzzleNumber: number, guess: number, r
 export function loadStats(game: GameSlug): DailyStats {
   try {
     const raw = localStorage.getItem(`gg-${game}-stats`)
-    return raw ? JSON.parse(raw) : { streak: 0, maxStreak: 0, distribution: {}, history: [] }
+    const parsed = raw ? JSON.parse(raw) : {}
+    return { streak: 0, maxStreak: 0, playStreak: 0, maxPlayStreak: 0, distribution: {}, history: [], ...parsed }
   } catch {
-    return { streak: 0, maxStreak: 0, distribution: {}, history: [] }
+    return { streak: 0, maxStreak: 0, playStreak: 0, maxPlayStreak: 0, distribution: {}, history: [] }
   }
 }
 
@@ -37,12 +38,34 @@ export function setOnboarded(): void {
 export function updateStats(stats: DailyStats, puzzleNumber: number, guess: number, actual: number): DailyStats {
   const isExact = guess === actual
   const diff = Math.abs(guess - actual)
-  const newStreak = isExact ? stats.streak + 1 : 0
+
+  // Streak requires: exact guess AND played the previous puzzle (consecutive days)
+  const lastEntry = stats.history.length > 0 ? stats.history[stats.history.length - 1] : null
+  const playedYesterday = lastEntry !== null && lastEntry.puzzleNumber === puzzleNumber - 1
+  const wasOnStreak = stats.streak > 0
+
+  // Perfect streak: exact guess on consecutive days
+  let newStreak: number
+  if (!isExact) {
+    newStreak = 0
+  } else if (wasOnStreak && playedYesterday) {
+    newStreak = stats.streak + 1
+  } else {
+    newStreak = 1
+  }
+
+  // Play streak: played on consecutive days (regardless of guess accuracy)
+  const prevPlayStreak = stats.playStreak ?? 0
+  const maxPlayStreak = stats.maxPlayStreak ?? 0
+  const newPlayStreak = playedYesterday || prevPlayStreak === 0 ? prevPlayStreak + 1 : 1
+
   const newDistribution = { ...stats.distribution }
   newDistribution[diff] = (newDistribution[diff] ?? 0) + 1
   return {
     streak: newStreak,
     maxStreak: Math.max(stats.maxStreak, newStreak),
+    playStreak: newPlayStreak,
+    maxPlayStreak: Math.max(maxPlayStreak, newPlayStreak),
     distribution: newDistribution,
     history: [...stats.history, { puzzleNumber, guess, actual }].slice(-365),
   }

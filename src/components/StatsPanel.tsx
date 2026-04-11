@@ -69,31 +69,39 @@ export function StatsPanel({ stats, todayDiff }: StatsPanelProps) {
 
   return (
     <div className="w-full">
-      {/* 4-stat summary row */}
-      <div className="mb-4 grid grid-cols-4 gap-2 text-center">
+      {/* Stat summary rows */}
+      <div className="mb-4 grid grid-cols-3 gap-2 text-center">
         <div>
-          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
+          <div className="text-[28px] font-light leading-none text-[var(--color-text)]">
             {played}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Played</div>
+          <div className="mt-1 text-[10px] text-[var(--color-text-secondary)]">Played</div>
         </div>
         <div>
-          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
+          <div className="text-[28px] font-light leading-none text-[var(--color-text)]">
             {exactPct}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Exact %</div>
+          <div className="mt-1 text-[10px] text-[var(--color-text-secondary)]">Exact %</div>
         </div>
         <div>
-          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
+          <div className="text-[28px] font-light leading-none text-[var(--color-text)]">
+            {stats.playStreak ?? 0}/{stats.maxPlayStreak ?? 0}
+          </div>
+          <div className="mt-1 text-[10px] text-[var(--color-text-secondary)]">Daily Streak</div>
+        </div>
+      </div>
+      <div className="mb-4 grid grid-cols-2 gap-2 text-center">
+        <div>
+          <div className="text-[28px] font-light leading-none text-[var(--color-green)]">
             {stats.streak}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Current Streak</div>
+          <div className="mt-1 text-[10px] text-[var(--color-text-secondary)]">Perfect Streak</div>
         </div>
         <div>
-          <div className="text-[32px] font-light leading-none text-[var(--color-text)]">
+          <div className="text-[28px] font-light leading-none text-[var(--color-text)]">
             {stats.maxStreak}
           </div>
-          <div className="mt-1 text-[11px] text-[var(--color-text-secondary)]">Max Streak</div>
+          <div className="mt-1 text-[10px] text-[var(--color-text-secondary)]">Best Perfect</div>
         </div>
       </div>
 
