@@ -142,7 +142,7 @@ export function StatsPanel({ stats, todayDiff }: StatsPanelProps) {
       {/* Countdown */}
       <div className="mt-6 border-t border-[var(--color-border)] pt-4 text-center">
         <div className="text-[11px] font-bold uppercase tracking-[0.15em] text-[var(--color-text-secondary)]">
-          Next GradeGuess
+          Next Slabble
         </div>
         <div className="mt-1 text-[28px] font-light tabular-nums text-[var(--color-text)]">
           {countdown}

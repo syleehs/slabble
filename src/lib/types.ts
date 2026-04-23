@@ -7,10 +7,6 @@ export interface DailyCard {
 
 export interface DailyReveal {
   actualGrade: number
-  company: string
-  cardName: string
-  certNumber: string
-  certUrl: string
   game: string
 }
 

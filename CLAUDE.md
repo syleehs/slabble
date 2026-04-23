@@ -31,4 +31,6 @@ npm run lint         # eslint
 
 **localStorage:** All keys prefixed with `gg-`. No server-side state.
 
-**Deploy:** `npm run build && aws s3 sync dist/ s3://{bucket}/`
+**Deploy:** `npm run build && aws s3 sync dist/ s3://gradeguess-site/ --exclude "cards/*" --delete`
+
+Bucket name `gradeguess-site` is pre-rename legacy and intentionally preserved — renaming requires a CloudFront origin swap and buys only cosmetic consistency.

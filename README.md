@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# Slabble
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A daily trading-card grade-guessing game. See a graded card, guess the 1–10 grade, reveal. One card per category per day.
 
-Currently, two official plugins are available:
+Categories: Pokémon, One Piece, baseball, basketball, football.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Live: https://slabble.app
 
-## React Compiler
+## Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 + Vite + TailwindCSS 4
+- `react-router-dom` SPA, client-side only
+- Hosted on S3 + CloudFront (Cloudflare DNS in front)
+- Backend: shared [Hikokyu](#) Go Lambda (see `VITE_API_URL`)
 
-## Expanding the ESLint configuration
+## Commands
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev          # dev server on http://localhost:5173
+npm run build        # type-check + vite build → dist/
+npm run lint         # eslint
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Config
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+VITE_API_URL=<hikokyu-cloudfront-url>
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+No server-side state. All player data (streaks, stats, saved guesses) lives in `localStorage` under keys prefixed with `gg-`. The prefix is preserved from the original project name to keep existing player streaks intact.
+
+## Deploy
+
+```bash
+npm run build
+aws s3 sync dist/ s3://gradeguess-site/ --exclude "cards/*" --delete
+```
+
+S3 bucket name is legacy (pre-rename) and intentionally unchanged — renaming a bucket requires a full migration. Domain (`slabble.app`) routes to the CloudFront distribution in front of this bucket.
+
+## Project structure
+
+```
+src/
+├── components/
+│   ├── Hub.tsx           # /  — landing, 5 game tiles, combined stats
+│   ├── GamePage.tsx      # /:game — play flow
+│   ├── CardViewer.tsx    # zoomable card image + lightbox
+│   ├── Onboarding.tsx    # first-visit overlay
+│   └── StatsPanel.tsx    # reusable histogram
+└── lib/
+    ├── api.ts            # Hikokyu calls
+    ├── storage.ts        # localStorage (gg- prefix)
+    └── types.ts          # game slugs, card/reveal types
 ```
