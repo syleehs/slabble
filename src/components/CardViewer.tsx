@@ -39,6 +39,8 @@ export function CardViewer({ frontImageUrl, backImageUrl, mode }: CardViewerProp
           className="max-h-[90vh] w-auto"
           style={{ objectFit: 'contain' }}
           draggable={false}
+          fetchPriority="high"
+          decoding="async"
         />
       </div>
     )
@@ -76,6 +78,8 @@ export function CardViewer({ frontImageUrl, backImageUrl, mode }: CardViewerProp
           style={{ objectFit: 'contain' }}
           draggable={false}
           loading={activeTab === 'back' ? 'lazy' : undefined}
+          fetchPriority={activeTab === 'front' ? 'high' : 'auto'}
+          decoding="async"
           onClick={() => setLightboxSrc(activeUrl)}
           tabIndex={0}
           onKeyDown={(e) => { if (e.key === 'Enter') setLightboxSrc(activeUrl) }}
@@ -130,6 +134,8 @@ function ZoomImage({ src, alt, maxHeight = '70vh' }: { src: string; alt: string;
         alt={alt}
         style={{ maxHeight, objectFit: 'contain', width: 'auto' }}
         draggable={false}
+        fetchPriority="high"
+        decoding="async"
       />
       {lens.visible && (
         <div
