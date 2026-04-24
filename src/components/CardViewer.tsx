@@ -36,7 +36,7 @@ export function CardViewer({ frontImageUrl, backImageUrl, mode }: CardViewerProp
         <img
           src={frontImageUrl}
           alt="Card front scan"
-          className="max-h-[70vh] w-auto"
+          className="max-h-[90vh] w-auto"
           style={{ objectFit: 'contain' }}
           draggable={false}
         />
@@ -48,8 +48,8 @@ export function CardViewer({ frontImageUrl, backImageUrl, mode }: CardViewerProp
     <>
       {/* Desktop: side by side */}
       <div className="hidden flex-1 items-center justify-center gap-4 py-4 sm:flex">
-        <ZoomImage src={frontImageUrl} alt="Card front scan" />
-        {hasBack && <ZoomImage src={backImageUrl} alt="Card back scan" />}
+        <ZoomImage src={frontImageUrl} alt="Card front scan" maxHeight="90vh" />
+        {hasBack && <ZoomImage src={backImageUrl} alt="Card back scan" maxHeight="90vh" />}
       </div>
 
       {/* Mobile: toggle + tap-to-lightbox */}
@@ -105,7 +105,7 @@ function ToggleButton({ label, active, onClick }: { label: string; active: boole
   )
 }
 
-function ZoomImage({ src, alt }: { src: string; alt: string }) {
+function ZoomImage({ src, alt, maxHeight = '70vh' }: { src: string; alt: string; maxHeight?: string }) {
   const [lens, setLens] = useState<{ x: number; y: number; visible: boolean }>({ x: 0, y: 0, visible: false })
   const imgRef = useRef<HTMLDivElement>(null)
 
@@ -121,15 +121,14 @@ function ZoomImage({ src, alt }: { src: string; alt: string }) {
     <div
       ref={imgRef}
       className="relative cursor-crosshair"
-      style={{ maxHeight: '70vh' }}
+      style={{ maxHeight, zIndex: lens.visible ? 10 : 'auto' }}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setLens(prev => ({ ...prev, visible: false }))}
     >
       <img
         src={src}
         alt={alt}
-        className="max-h-[70vh] w-auto"
-        style={{ objectFit: 'contain' }}
+        style={{ maxHeight, objectFit: 'contain', width: 'auto' }}
         draggable={false}
       />
       {lens.visible && (

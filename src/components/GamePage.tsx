@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'react-router-dom'
 import { fetchDaily, submitGuess } from '../lib/api'
+import { track } from '../lib/analytics'
 import { loadGuess, saveGuess, loadStats, saveStats, updateStats, isOnboarded, setOnboarded } from '../lib/storage'
 import { getGameInfo, type GameSlug, type DailyCard, type DailyReveal } from '../lib/types'
 import { StatsPanel } from './StatsPanel'
@@ -58,8 +59,10 @@ export function GamePage() {
           setReveal(stored.reveal)
           setStats(loadStats(gameSlug))
           setState('revealed')
+          track('card_viewed', { game: gameSlug, puzzleNumber: data.puzzleNumber }, { returning: true })
         } else {
           setState('guessing')
+          track('card_viewed', { game: gameSlug, puzzleNumber: data.puzzleNumber }, { returning: false })
         }
       })
       .catch(() => {
@@ -88,6 +91,11 @@ export function GamePage() {
       setStats(updated)
       setAnimateReveal(true)
       setState('revealed')
+      track(
+        'guess_submitted',
+        { game: gameSlug, puzzleNumber: card.puzzleNumber },
+        { guess: selectedGrade, actual_grade: result.actualGrade, diff: Math.abs(selectedGrade - result.actualGrade) },
+      )
     } catch {
       setErrorMsg('Failed to submit guess. Try again.')
       setState('error')
@@ -97,14 +105,15 @@ export function GamePage() {
   }, [gameSlug, card, selectedGrade, submitting])
 
   const handleShare = useCallback(() => {
-    if (!gameInfo || !card || guess == null || !reveal) return
+    if (!gameInfo || !card || guess == null || !reveal || !gameSlug) return
     const diff = Math.abs(guess - reveal.actualGrade)
     const emoji = diff === 0 ? '\u{1F7E9}' : diff === 1 ? '\u{1F7E8}' : '\u{2B1B}'
-    const text = `GradeGuess #${card.puzzleNumber} ${emoji} ${guess}`
+    const text = `Slabble #${card.puzzleNumber} ${emoji}`
     navigator.clipboard.writeText(text).catch(() => {})
     setShareText('COPIED!')
     setTimeout(() => setShareText('SHARE'), 2000)
-  }, [gameInfo, card, guess, reveal])
+    track('share_clicked', { game: gameSlug, puzzleNumber: card.puzzleNumber }, { diff })
+  }, [gameInfo, card, guess, reveal, gameSlug])
 
   function handleDismissOnboarding() {
     setOnboarded()
@@ -118,7 +127,7 @@ export function GamePage() {
     <header className="flex h-[50px] items-center justify-between border-b border-[var(--color-border)] px-4">
       <div className="w-[44px]" />
       <h1 className="text-[16px] font-bold uppercase tracking-[0.2em] text-[var(--color-text)]">
-        GradeGuess
+        Slabble
       </h1>
       <div className="flex w-[44px] items-center justify-end gap-3">
         <button
@@ -202,7 +211,7 @@ export function GamePage() {
   }
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-[500px] flex-col">
+    <div className={`mx-auto flex min-h-screen flex-col ${state === 'revealed' ? 'max-w-[500px]' : 'max-w-[900px]'}`}>
       {showOnboarding && <Onboarding onDismiss={handleDismissOnboarding} />}
       {showHelp && <Onboarding onDismiss={() => setShowHelp(false)} />}
 
@@ -218,7 +227,7 @@ export function GamePage() {
 
         {/* Guessing state */}
         {state === 'guessing' && (
-          <div className="pb-6">
+          <div className="mx-auto w-full max-w-[500px] pb-6">
             {/* Prompt */}
             <div className="mb-4 text-center text-[13px] uppercase tracking-wide text-[var(--color-text-secondary)]">
               What grade did this card receive?
@@ -311,27 +320,6 @@ export function GamePage() {
                 animationFillMode: 'forwards',
               }}
             >
-              <div className="text-[14px] font-semibold text-[var(--color-text)]">
-                {reveal.cardName}
-              </div>
-              <div className="mt-1 flex items-center gap-2 text-[12px] text-[var(--color-text-muted)]">
-                <span className="font-bold uppercase text-[var(--color-text-secondary)]">
-                  {reveal.company}
-                </span>
-                {reveal.certUrl && (
-                  <>
-                    <span className="text-[var(--color-border)]">&middot;</span>
-                    <a
-                      href={reveal.certUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
-                    >
-                      Cert #{reveal.certNumber}
-                    </a>
-                  </>
-                )}
-              </div>
             </div>
 
             {/* Stats panel - slides up */}
