@@ -161,8 +161,9 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
 
   const [scale, setScale] = useState(1)
   const [translate, setTranslate] = useState({ x: 0, y: 0 })
+  const [isPanning, setIsPanning] = useState(false)
   const pinchRef = useRef({ initialDistance: 0, initialScale: 1 })
-  const panRef = useRef({ startX: 0, startY: 0, startTransX: 0, startTransY: 0, isPanning: false })
+  const panRef = useRef({ startX: 0, startY: 0, startTransX: 0, startTransY: 0 })
 
   useEffect(() => {
     closeRef.current?.focus()
@@ -202,8 +203,8 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
         startY: e.touches[0].clientY,
         startTransX: translate.x,
         startTransY: translate.y,
-        isPanning: true,
       }
+      setIsPanning(true)
     }
   }, [scale, translate])
 
@@ -220,18 +221,18 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
       } else {
         setTranslate(prev => clampTranslate(prev.x, prev.y, newScale))
       }
-    } else if (e.touches.length === 1 && panRef.current.isPanning) {
+    } else if (e.touches.length === 1 && isPanning) {
       const dx = e.touches[0].clientX - panRef.current.startX
       const dy = e.touches[0].clientY - panRef.current.startY
       const newX = panRef.current.startTransX + dx
       const newY = panRef.current.startTransY + dy
       setTranslate(clampTranslate(newX, newY, scale))
     }
-  }, [scale, clampTranslate])
+  }, [scale, clampTranslate, isPanning])
 
   const handleTouchEnd = useCallback((e: React.TouchEvent) => {
     e.stopPropagation()
-    panRef.current.isPanning = false
+    setIsPanning(false)
     // Reset to 1x on last finger lift if scale is near 1
     if (e.touches.length === 0 && scale < 1.1) {
       setScale(1)
@@ -277,7 +278,7 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
           touchAction: 'none',
           objectFit: 'contain',
           transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-          transition: panRef.current.isPanning ? 'none' : 'transform 0.1s ease-out',
+          transition: isPanning ? 'none' : 'transform 0.1s ease-out',
         }}
         onClick={(e) => e.stopPropagation()}
         onTouchStart={handleTouchStart}
