@@ -4,6 +4,15 @@ Slabble events land in `s3://slabble-events/dt=YYYY-MM-DD/*.parquet` via Kinesis
 Firehose, registered as Glue table `slabble.events`. Run these queries from
 Athena (workgroup `primary` works fine; set a result location once).
 
+### Quick daily check
+
+```bash
+bash docs/analytics/report.sh
+```
+
+Refreshes partitions, runs all three queries, and prints results as tables.
+Override `WORKGROUP` and `RESULT_LOC` env vars if your Athena setup differs.
+
 ### Adding new partitions
 
 Firehose writes new daily prefixes automatically, but Glue needs to be told.
