@@ -2,9 +2,21 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fetchStatus } from '../lib/api'
 
+// Mirrors backend launchDate in hikokyu/api/daily.go.
+// Puzzle #0 = this date. Update both sides if the launch is ever re-anchored.
+const LAUNCH_DATE_UTC = Date.UTC(2026, 3, 10) // April 10, 2026 (months are 0-indexed)
+
+function localPuzzleNumber(): number {
+  const now = new Date()
+  const todayUtc = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate())
+  const days = Math.floor((todayUtc - LAUNCH_DATE_UTC) / (1000 * 60 * 60 * 24))
+  return Math.max(0, days)
+}
+
 export function IntroPage() {
   const navigate = useNavigate()
-  const [puzzleNumber, setPuzzleNumber] = useState<number | null>(null)
+  // Compute locally for instant render; API resolves and corrects if drift.
+  const [puzzleNumber, setPuzzleNumber] = useState<number>(() => localPuzzleNumber())
 
   useEffect(() => {
     fetchStatus()
@@ -117,7 +129,7 @@ export function IntroPage() {
 
         <div className="mt-10 text-center text-[14px] font-medium text-[var(--color-text-secondary)]">
           <div>{today}</div>
-          {puzzleNumber !== null && <div className="mt-1">No. {puzzleNumber}</div>}
+          <div className="mt-1">Slabble #{puzzleNumber}</div>
         </div>
       </div>
     </div>
