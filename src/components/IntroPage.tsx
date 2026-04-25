@@ -23,31 +23,66 @@ export function IntroPage() {
 
   return (
     <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[var(--color-bg)] px-6 text-[var(--color-text)]">
-      {/* Faded slab silhouette as ambient background */}
+      {/* Faded slab silhouette as ambient background.
+          Grey case + red top label band = the iconic PSA look, muted. */}
       <svg
         aria-hidden="true"
-        className="pointer-events-none absolute z-0 text-[var(--color-text)] opacity-[0.07]"
-        width="420"
-        height="600"
-        viewBox="0 0 420 600"
+        className="pointer-events-none absolute z-0"
+        width="560"
+        height="720"
+        viewBox="0 0 560 720"
         fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
         style={{
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%) rotate(-6deg)',
+          transform: 'translate(-50%, -50%) rotate(-5deg)',
         }}
       >
-        {/* Outer slab case */}
-        <rect x="8" y="8" width="404" height="584" rx="14" />
-        {/* Divider between top label and card window */}
-        <line x1="8" y1="92" x2="412" y2="92" />
+        {/* Outer slab case — grey */}
+        <rect
+          x="8"
+          y="8"
+          width="544"
+          height="704"
+          rx="14"
+          stroke="#a0a0a0"
+          strokeOpacity="0.18"
+          strokeWidth="2"
+        />
+        {/* Top label band — muted PSA red */}
+        <rect
+          x="9"
+          y="9"
+          width="542"
+          height="92"
+          rx="12"
+          ry="12"
+          fill="#b13a3a"
+          fillOpacity="0.10"
+        />
+        <line
+          x1="8"
+          y1="100"
+          x2="552"
+          y2="100"
+          stroke="#a0a0a0"
+          strokeOpacity="0.18"
+          strokeWidth="2"
+        />
         {/* Inner card window */}
-        <rect x="32" y="120" width="356" height="448" rx="6" />
+        <rect
+          x="30"
+          y="128"
+          width="500"
+          height="560"
+          rx="6"
+          stroke="#a0a0a0"
+          strokeOpacity="0.18"
+          strokeWidth="2"
+        />
       </svg>
 
-      {/* Foreground content */}
+      {/* Foreground content sits in the slab's card window area */}
       <div className="relative z-10 flex flex-col items-center">
         <h1 className="font-serif text-[56px] font-bold leading-none tracking-tight sm:text-[80px]">
           Slabble
