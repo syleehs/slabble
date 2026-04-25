@@ -22,38 +22,53 @@ export function IntroPage() {
   })
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-bg)] px-6 text-[var(--color-text)]">
-      {/* Icon: a stylized graded card pip */}
-      <div
+    <div className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden bg-[var(--color-bg)] px-6 text-[var(--color-text)]">
+      {/* Faded slab silhouette as ambient background */}
+      <svg
         aria-hidden="true"
-        className="mb-6 flex h-[80px] w-[80px] items-center justify-center border-2 border-[var(--color-text)] bg-[var(--color-green)] text-[34px] font-bold text-white"
+        className="pointer-events-none absolute z-0 text-[var(--color-text)] opacity-[0.07]"
+        width="420"
+        height="600"
+        viewBox="0 0 420 600"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        style={{
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) rotate(-6deg)',
+        }}
       >
-        10
-      </div>
+        {/* Outer slab case */}
+        <rect x="8" y="8" width="404" height="584" rx="14" />
+        {/* Divider between top label and card window */}
+        <line x1="8" y1="92" x2="412" y2="92" />
+        {/* Inner card window */}
+        <rect x="32" y="120" width="356" height="448" rx="6" />
+      </svg>
 
-      {/* Wordmark */}
-      <h1 className="font-serif text-[56px] font-bold leading-none tracking-tight text-[var(--color-text)] sm:text-[72px]">
-        Slabble
-      </h1>
+      {/* Foreground content */}
+      <div className="relative z-10 flex flex-col items-center">
+        <h1 className="font-serif text-[56px] font-bold leading-none tracking-tight sm:text-[80px]">
+          Slabble
+        </h1>
 
-      {/* Tagline */}
-      <p className="mt-3 max-w-[420px] text-center font-serif text-[20px] leading-snug text-[var(--color-text)] sm:text-[26px]">
-        Guess the PSA grade of today's card.
-      </p>
+        <p className="mt-3 max-w-[420px] text-center font-serif text-[20px] leading-snug sm:text-[26px]">
+          Guess the grade of today's card.
+        </p>
 
-      {/* Play CTA */}
-      <button
-        type="button"
-        onClick={() => navigate('/pokemon')}
-        className="mt-10 rounded-full bg-[var(--color-text)] px-14 py-3 text-[16px] font-semibold text-[var(--color-bg)] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-text)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg)]"
-      >
-        Play
-      </button>
+        <button
+          type="button"
+          onClick={() => navigate('/pokemon')}
+          className="mt-10 rounded-full bg-[var(--color-text)] px-14 py-3 text-[16px] font-semibold text-[var(--color-bg)] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-text)] focus:ring-offset-2 focus:ring-offset-[var(--color-bg)]"
+        >
+          Play
+        </button>
 
-      {/* Footer */}
-      <div className="mt-10 text-center text-[14px] font-medium text-[var(--color-text-secondary)]">
-        <div>{today}</div>
-        {puzzleNumber !== null && <div className="mt-1">No. {puzzleNumber}</div>}
+        <div className="mt-10 text-center text-[14px] font-medium text-[var(--color-text-secondary)]">
+          <div>{today}</div>
+          {puzzleNumber !== null && <div className="mt-1">No. {puzzleNumber}</div>}
+        </div>
       </div>
     </div>
   )
