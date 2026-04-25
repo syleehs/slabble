@@ -58,8 +58,23 @@ export function IntroPage() {
           rx="12"
           ry="12"
           fill="#b13a3a"
-          fillOpacity="0.10"
+          fillOpacity="0.12"
         />
+        {/* White "grade pip" on the right side of the red banner — the iconic PSA grade box */}
+        <rect
+          x="446"
+          y="24"
+          width="96"
+          height="62"
+          rx="4"
+          fill="#ffffff"
+          fillOpacity="0.22"
+        />
+        {/* Thin white text strips on the left side of the red banner, evoking
+            the card name + set printed in white on a real slab */}
+        <rect x="32" y="34" width="200" height="6" rx="1" fill="#ffffff" fillOpacity="0.18" />
+        <rect x="32" y="50" width="160" height="6" rx="1" fill="#ffffff" fillOpacity="0.14" />
+        <rect x="32" y="68" width="120" height="4" rx="1" fill="#ffffff" fillOpacity="0.10" />
         <line
           x1="8"
           y1="100"
