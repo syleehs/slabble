@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 
 interface CardViewerProps {
   frontImageUrl: string
@@ -8,25 +8,8 @@ interface CardViewerProps {
 
 export function CardViewer({ frontImageUrl, backImageUrl, mode }: CardViewerProps) {
   const [activeTab, setActiveTab] = useState<'front' | 'back'>('front')
-  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null)
-  const triggerRef = useRef<HTMLImageElement | null>(null)
 
   const hasBack = backImageUrl != null
-
-  useEffect(() => {
-    if (!lightboxSrc) return
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setLightboxSrc(null)
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
-  }, [lightboxSrc])
-
-  useEffect(() => {
-    if (!lightboxSrc && triggerRef.current) {
-      triggerRef.current.focus()
-    }
-  }, [lightboxSrc])
 
   const activeUrl = activeTab === 'front' ? frontImageUrl : backImageUrl!
 
@@ -54,7 +37,7 @@ export function CardViewer({ frontImageUrl, backImageUrl, mode }: CardViewerProp
         {hasBack && <ZoomImage src={backImageUrl} alt="Card back scan" maxHeight="90vh" />}
       </div>
 
-      {/* Mobile: toggle + tap-to-lightbox */}
+      {/* Mobile: front/back toggle, no lightbox */}
       <div className="flex flex-1 flex-col items-center py-4 sm:hidden">
         {hasBack && (
           <div className="mb-3 flex gap-1">
@@ -71,24 +54,16 @@ export function CardViewer({ frontImageUrl, backImageUrl, mode }: CardViewerProp
           </div>
         )}
         <img
-          ref={triggerRef}
           src={activeUrl}
           alt={activeTab === 'front' ? 'Card front scan' : 'Card back scan'}
-          className="max-h-[70vh] w-auto cursor-pointer"
+          className="max-h-[70vh] w-auto"
           style={{ objectFit: 'contain' }}
           draggable={false}
           loading={activeTab === 'back' ? 'lazy' : undefined}
           fetchPriority={activeTab === 'front' ? 'high' : 'auto'}
           decoding="async"
-          onClick={() => setLightboxSrc(activeUrl)}
-          tabIndex={0}
-          onKeyDown={(e) => { if (e.key === 'Enter') setLightboxSrc(activeUrl) }}
         />
       </div>
-
-      {lightboxSrc && (
-        <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
-      )}
     </>
   )
 }
@@ -150,142 +125,6 @@ function ZoomImage({ src, alt, maxHeight = '70vh' }: { src: string; alt: string;
           }}
         />
       )}
-    </div>
-  )
-}
-
-function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
-  const closeRef = useRef<HTMLButtonElement>(null)
-  const imgRef = useRef<HTMLImageElement>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-
-  const [scale, setScale] = useState(1)
-  const [translate, setTranslate] = useState({ x: 0, y: 0 })
-  const [isPanning, setIsPanning] = useState(false)
-  const pinchRef = useRef({ initialDistance: 0, initialScale: 1 })
-  const panRef = useRef({ startX: 0, startY: 0, startTransX: 0, startTransY: 0 })
-
-  useEffect(() => {
-    closeRef.current?.focus()
-  }, [])
-
-  // Clamp translation so the image doesn't go past its borders
-  const clampTranslate = useCallback((tx: number, ty: number, s: number) => {
-    if (s <= 1) return { x: 0, y: 0 }
-    const img = imgRef.current
-    const container = containerRef.current
-    if (!img || !container) return { x: tx, y: ty }
-
-    const imgRect = img.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
-
-    // How much bigger the scaled image is vs the container
-    const scaledW = (imgRect.width / scale) * s
-    const scaledH = (imgRect.height / scale) * s
-    const overflowX = Math.max(0, (scaledW - containerRect.width) / 2)
-    const overflowY = Math.max(0, (scaledH - containerRect.height) / 2)
-
-    return {
-      x: Math.max(-overflowX, Math.min(overflowX, tx)),
-      y: Math.max(-overflowY, Math.min(overflowY, ty)),
-    }
-  }, [scale])
-
-  const handleTouchStart = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      pinchRef.current = { initialDistance: Math.hypot(dx, dy), initialScale: scale }
-    } else if (e.touches.length === 1 && scale > 1) {
-      panRef.current = {
-        startX: e.touches[0].clientX,
-        startY: e.touches[0].clientY,
-        startTransX: translate.x,
-        startTransY: translate.y,
-      }
-      setIsPanning(true)
-    }
-  }, [scale, translate])
-
-  const handleTouchMove = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX
-      const dy = e.touches[0].clientY - e.touches[1].clientY
-      const distance = Math.hypot(dx, dy)
-      const newScale = Math.max(1, Math.min(5, pinchRef.current.initialScale * (distance / pinchRef.current.initialDistance)))
-      setScale(newScale)
-      if (newScale <= 1) {
-        setTranslate({ x: 0, y: 0 })
-      } else {
-        setTranslate(prev => clampTranslate(prev.x, prev.y, newScale))
-      }
-    } else if (e.touches.length === 1 && isPanning) {
-      const dx = e.touches[0].clientX - panRef.current.startX
-      const dy = e.touches[0].clientY - panRef.current.startY
-      const newX = panRef.current.startTransX + dx
-      const newY = panRef.current.startTransY + dy
-      setTranslate(clampTranslate(newX, newY, scale))
-    }
-  }, [scale, clampTranslate, isPanning])
-
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    e.stopPropagation()
-    setIsPanning(false)
-    // Reset to 1x on last finger lift if scale is near 1
-    if (e.touches.length === 0 && scale < 1.1) {
-      setScale(1)
-      setTranslate({ x: 0, y: 0 })
-    }
-  }, [scale])
-
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Tab') {
-      e.preventDefault()
-      closeRef.current?.focus()
-    }
-  }, [])
-
-  // Close on tap only when not zoomed
-  const handleBackdropClick = useCallback(() => {
-    if (scale <= 1) onClose()
-  }, [scale, onClose])
-
-  return (
-    <div
-      ref={containerRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90"
-      role="dialog"
-      aria-modal="true"
-      onClick={handleBackdropClick}
-      onKeyDown={handleKeyDown}
-    >
-      <button
-        ref={closeRef}
-        onClick={(e) => { e.stopPropagation(); onClose() }}
-        aria-label="Close"
-        className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center text-[24px] text-white/70 hover:text-white"
-      >
-        &times;
-      </button>
-      <img
-        ref={imgRef}
-        src={src}
-        alt="Card scan fullscreen"
-        className="max-h-[90vh] max-w-[95vw]"
-        style={{
-          touchAction: 'none',
-          objectFit: 'contain',
-          transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-          transition: isPanning ? 'none' : 'transform 0.1s ease-out',
-        }}
-        onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
-        draggable={false}
-      />
     </div>
   )
 }

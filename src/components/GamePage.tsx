@@ -311,17 +311,6 @@ export function GamePage() {
               </div>
             </div>
 
-            {/* Card details - fade in after reveal */}
-            <div
-              className={`mb-4 border-t border-b border-[var(--color-border)] py-3 ${animateReveal ? 'animate-fade' : ''}`}
-              style={{
-                animationDelay: animateReveal ? '0.6s' : undefined,
-                opacity: animateReveal ? 0 : 1,
-                animationFillMode: 'forwards',
-              }}
-            >
-            </div>
-
             {/* Stats panel - slides up */}
             <div
               className={animateReveal ? 'animate-slide-up' : ''}
