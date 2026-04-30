@@ -7,6 +7,7 @@ import { getGameInfo, type GameSlug, type DailyCard, type DailyReveal } from '..
 import { StatsPanel } from './StatsPanel'
 import { Onboarding } from './Onboarding'
 import { CardViewer } from './CardViewer'
+import { CriteriaDrawer } from './CriteriaDrawer'
 
 type PageState = 'loading' | 'guessing' | 'revealed' | 'error' | 'not-found'
 
@@ -39,6 +40,7 @@ export function GamePage() {
   const [showHelp, setShowHelp] = useState(false)
   const [shareText, setShareText] = useState('SHARE')
   const [animateReveal, setAnimateReveal] = useState(false)
+  const [criteriaOpen, setCriteriaOpen] = useState(false)
 
   useEffect(() => {
     if (!gameInfo || !gameSlug) {
@@ -250,6 +252,15 @@ export function GamePage() {
               ))}
             </div>
 
+            {/* View grading criteria trigger */}
+            <button
+              type="button"
+              onClick={() => setCriteriaOpen(true)}
+              className="mx-auto mb-3 block text-[12px] uppercase tracking-[0.1em] text-[var(--color-text-secondary)] underline-offset-2 hover:text-[var(--color-text)] hover:underline"
+            >
+              View grading criteria
+            </button>
+
             {/* Enter button */}
             <button
               onClick={handleSubmit}
@@ -342,6 +353,7 @@ export function GamePage() {
           </div>
         )}
       </div>
+      <CriteriaDrawer open={criteriaOpen} onClose={() => setCriteriaOpen(false)} />
     </div>
   )
 }
