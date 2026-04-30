@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { fetchDaily, submitGuess } from '../lib/api'
 import { track } from '../lib/analytics'
 import { loadGuess, saveGuess, loadStats, saveStats, updateStats, isOnboarded, setOnboarded } from '../lib/storage'
@@ -25,6 +25,7 @@ function feedbackText(diff: number): string {
 }
 
 export function GamePage() {
+  const navigate = useNavigate()
   const { game: gameParam } = useParams<{ game: string }>()
   const gameInfo = gameParam ? getGameInfo(gameParam) : undefined
   const gameSlug = gameInfo?.slug as GameSlug | undefined
@@ -128,11 +129,21 @@ export function GamePage() {
   // Header
   const header = (
     <header className="flex h-[50px] items-center justify-between border-b border-[var(--color-border)] px-4">
-      <div className="w-[44px]" />
+      <div className="w-[88px]" />
       <h1 className="text-[16px] font-bold uppercase tracking-[0.2em] text-[var(--color-text)]">
         Slabble
       </h1>
-      <div className="flex w-[44px] items-center justify-end gap-3">
+      <div className="flex w-[88px] items-center justify-end gap-3">
+        <button
+          type="button"
+          className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
+          aria-label="Grading criteria"
+          onClick={() => navigate('/learn')}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+          </svg>
+        </button>
         <button
           type="button"
           className="text-[var(--color-text-secondary)] hover:text-[var(--color-text)]"
