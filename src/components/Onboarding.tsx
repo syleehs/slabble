@@ -1,8 +1,17 @@
+import { useNavigate } from 'react-router-dom'
+
 interface OnboardingProps {
   onDismiss: () => void
 }
 
 export function Onboarding({ onDismiss }: OnboardingProps) {
+  const navigate = useNavigate()
+
+  function handleLearnClick() {
+    onDismiss()
+    navigate('/learn')
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
       <div className="w-full max-w-[340px] border border-[var(--color-border)] bg-[var(--color-bg)] px-6 py-8">
@@ -41,6 +50,14 @@ export function Onboarding({ onDismiss }: OnboardingProps) {
           className="w-full bg-[var(--color-green)] py-3 text-[13px] font-bold uppercase tracking-[0.15em] text-white transition-opacity hover:opacity-90"
         >
           Play
+        </button>
+
+        <button
+          type="button"
+          onClick={handleLearnClick}
+          className="mt-3 block w-full text-center text-[11px] uppercase tracking-[0.1em] text-[var(--color-text-muted)] underline-offset-2 hover:text-[var(--color-text-secondary)] hover:underline"
+        >
+          Read full grading criteria →
         </button>
       </div>
     </div>
