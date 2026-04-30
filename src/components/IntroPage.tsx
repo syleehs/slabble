@@ -130,6 +130,13 @@ export function IntroPage() {
         <div className="mt-10 text-center text-[14px] font-medium text-[var(--color-text-secondary)]">
           <div>{today}</div>
           <div className="mt-1">Slabble #{puzzleNumber}</div>
+          <button
+            type="button"
+            onClick={() => navigate('/learn')}
+            className="mt-3 text-[12px] uppercase tracking-[0.1em] text-[var(--color-text-muted)] underline-offset-2 hover:text-[var(--color-text-secondary)] hover:underline"
+          >
+            Learn the grades →
+          </button>
         </div>
       </div>
     </div>
