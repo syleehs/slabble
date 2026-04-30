@@ -4,7 +4,16 @@ import { PSA_REFERENCE_URL } from '../lib/grading'
 
 export function LearnPage() {
   const navigate = useNavigate()
-  const goBack = () => navigate(-1)
+  // navigate(-1) is a no-op when the user landed on /learn directly (bookmark,
+  // shared link, hard refresh). Fall back to home so the close/back buttons
+  // always do something visible.
+  const goBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1)
+    } else {
+      navigate('/')
+    }
+  }
 
   return (
     <div className="mx-auto flex min-h-screen max-w-[560px] flex-col bg-[var(--color-bg)] px-4 text-[var(--color-text)]">

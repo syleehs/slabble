@@ -8,7 +8,7 @@ interface CriteriaCardProps {
 
 export function CriteriaCard({ grade, eyebrow }: CriteriaCardProps) {
   const c = getCriteriaFor(grade)
-  const isBelow7 = c.label === 'Below 7'
+  const isBelow7 = c.grade < 7
 
   return (
     <div className="flex flex-col">

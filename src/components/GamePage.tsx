@@ -44,6 +44,8 @@ export function GamePage() {
   const [animateReveal, setAnimateReveal] = useState(false)
   const [criteriaOpen, setCriteriaOpen] = useState(false)
 
+  const handleCriteriaClose = useCallback(() => setCriteriaOpen(false), [])
+
   useEffect(() => {
     if (!gameInfo || !gameSlug) {
       setState('not-found')
@@ -388,7 +390,7 @@ export function GamePage() {
           </div>
         )}
       </div>
-      <CriteriaDrawer open={criteriaOpen} onClose={() => setCriteriaOpen(false)} />
+      <CriteriaDrawer open={criteriaOpen} onClose={handleCriteriaClose} />
     </div>
   )
 }
