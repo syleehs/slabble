@@ -7,6 +7,9 @@ export interface GradeCriteria {
 
 export const PSA_REFERENCE_URL = 'https://www.psacard.com/grades'
 
+// TODO: replace each `summary` below with the verbatim 1-2 sentence quote
+// from psacard.com/grades before the grading-guide feature ships. The
+// current text is an accurate paraphrase, not PSA's published wording.
 export const PSA_CRITERIA: Record<7 | 8 | 9 | 10, GradeCriteria> = {
   7: {
     grade: 7,
