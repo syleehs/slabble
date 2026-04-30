@@ -8,6 +8,7 @@ import { StatsPanel } from './StatsPanel'
 import { Onboarding } from './Onboarding'
 import { CardViewer } from './CardViewer'
 import { CriteriaDrawer } from './CriteriaDrawer'
+import { CriteriaCard } from './CriteriaCard'
 
 type PageState = 'loading' | 'guessing' | 'revealed' | 'error' | 'not-found'
 
@@ -320,6 +321,29 @@ export function GamePage() {
                 {' '}&mdash; actual grade{' '}
                 <span className="font-bold text-[var(--color-text)]">{reveal.actualGrade}</span>
               </div>
+            </div>
+
+            {/* Criteria comparison - fade in between "you guessed" line and stats */}
+            <div
+              className={`mb-4 ${animateReveal ? 'animate-fade' : ''}`}
+              style={{
+                animationDelay: animateReveal ? '0.6s' : undefined,
+                opacity: animateReveal ? 0 : 1,
+                animationFillMode: 'forwards',
+              }}
+            >
+              {guess === reveal.actualGrade ? (
+                <CriteriaCard grade={reveal.actualGrade} />
+              ) : (
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                  <div className="flex-1">
+                    <CriteriaCard grade={reveal.actualGrade} eyebrow="Actual" />
+                  </div>
+                  <div className="flex-1">
+                    <CriteriaCard grade={guess} eyebrow="Your guess" />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Stats panel - slides up */}
