@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import './index.css'
 import { IntroPage } from './components/IntroPage'
+import { LearnPage } from './components/LearnPage'
 import { GamePage } from './components/GamePage'
 
 createRoot(document.getElementById('root')!).render(
@@ -10,6 +11,7 @@ createRoot(document.getElementById('root')!).render(
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<IntroPage />} />
+        <Route path="/learn" element={<LearnPage />} />
         <Route path="/:game" element={<GamePage />} />
       </Routes>
     </BrowserRouter>
